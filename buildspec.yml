@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      # No specific installation needed for a simple HTML file
+      - echo "No install phase commands needed for static HTML."
+  build:
+    commands:
+      # No specific build needed for a simple HTML file
+      - echo "No build phase commands needed for static HTML. Copying files directly."
+  post_build:
+    commands:
+      - echo "Build complete. Preparing artifacts."
+
+artifacts:
+  files:
+    - '**/*' # Include all files in the root directory
+  base-directory: . # The current directory is the base for artifacts
