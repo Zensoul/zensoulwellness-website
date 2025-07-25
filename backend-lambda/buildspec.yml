@@ -1,22 +1,26 @@
-# buildspec.yml for Node.js Lambda
+# buildspec.yml for Node.js Lambda with SAM CLI
 version: 0.2
 
 phases:
   install:
     runtime-versions:
-      nodejs: 18 # Or your preferred Node.js version for Lambda
+      nodejs: 18 # Or your preferred Node.js version
     commands:
+      - echo "Installing SAM CLI dependencies..."
+      - pip install aws-sam-cli # Install SAM CLI in the CodeBuild environment
       - echo "Installing Node.js dependencies..."
       - npm install # Install any dependencies listed in package.json
 
   build:
     commands:
-      - echo "Zipping Lambda function code..."
-      # Zip all files in the current directory, excluding node_modules/ and .git/
-      # This creates a deployment package for Lambda
-      - zip -r function.zip . -x "node_modules/*" ".git/*" "package-lock.json" "package.json"
+      - echo "Building SAM application..."
+      # Use SAM CLI to build the application. This will create a .zip file
+      # for your Lambda function in a .aws-sam/build directory.
+      - sam build --template template.yaml --build-dir .aws-sam/build
 
 artifacts:
+  # SAM build output is in .aws-sam/build. We need to package everything from there.
   files:
-    - function.zip # The zipped Lambda deployment package
-  discard-paths: yes # Don't include the 'backend-lambda/' directory prefix in the artifact
+    - '**/*'
+  base-directory: .aws-sam/build # The directory where SAM puts the build artifacts
+  discard-paths: yes # Don't include the '.aws-sam/build/' directory prefix in the artifact

@@ -1,0 +1,57 @@
+# template.yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: ZenSoul Wellness Backend API
+
+Globals:
+  Function:
+    Timeout: 30 # Default timeout for all functions in seconds
+    MemorySize: 128 # Default memory for all functions in MB
+    Runtime: nodejs18.x # Ensure this matches your index.js and buildspec.yml
+    Tracing: Active # Enable X-Ray tracing for better debugging
+
+Resources:
+  # Defines your Lambda Function
+  ZenSoulWellnessApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler # index.js file, handler function
+      CodeUri: . # Look for code in the current directory (where template.yaml is)
+      Events:
+        # Defines the API Gateway endpoint that triggers this Lambda
+        Api:
+          Type: Api
+          Properties:
+            Path: /hello # The path for your API endpoint (e.g., /prod/hello)
+            Method: get # The HTTP method (GET, POST, ANY)
+            # REMOVED: RestApiId: !Ref ZenSoulWellnessRestApi # SAM will automatically link this if not specified
+            # CORS configuration is moved OUT of here and into ZenSoulWellnessRestApi directly
+
+  # Defines the API Gateway itself
+  ZenSoulWellnessRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod # The deployment stage name (e.g., /prod)
+      # CORS configuration is now a direct property of the API Gateway
+      Cors:
+        AllowOrigin: "'*'" # Use single quotes for the literal string '*'
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'" # Single quotes for the literal string
+        AllowMethods: "'GET,OPTIONS'" # Single quotes for the literal string
+      DefinitionBody: # Define the API structure using OpenAPI (Swagger)
+        swagger: '2.0'
+        info:
+          title: ZenSoulWellnessApi
+        paths:
+          /hello:
+            get:
+              x-amazon-apigateway-integration:
+                httpMethod: POST # API Gateway always uses POST to invoke Lambda
+                type: aws_proxy # Use Lambda Proxy integration
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ZenSoulWellnessApiFunction.Arn}/invocations"
+              responses: {} # Required but can be empty
+
+Outputs:
+  # Outputs the URL of your API Gateway endpoint
+  ZenSoulWellnessApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for ZenSoul Wellness API"
+    Value: !Sub "https://${ZenSoulWellnessRestApi}.execute-api.${AWS::Region}.amazonaws.com/prod/hello"
