@@ -1,0 +1,22 @@
+# buildspec.yml for Node.js Lambda
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18 # Or your preferred Node.js version for Lambda
+    commands:
+      - echo "Installing Node.js dependencies..."
+      - npm install # Install any dependencies listed in package.json
+
+  build:
+    commands:
+      - echo "Zipping Lambda function code..."
+      # Zip all files in the current directory, excluding node_modules/ and .git/
+      # This creates a deployment package for Lambda
+      - zip -r function.zip . -x "node_modules/*" ".git/*" "package-lock.json" "package.json"
+
+artifacts:
+  files:
+    - function.zip # The zipped Lambda deployment package
+  discard-paths: yes # Don't include the 'backend-lambda/' directory prefix in the artifact
